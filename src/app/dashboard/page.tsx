@@ -10,10 +10,10 @@ type Lesson = { id: number; level: string; lesson_number: number; title: string;
 type Progress = { lesson_id: number; status: string }
 type Profile = { full_name: string; email: string; streak?: number; longest_streak?: number }
 
-const LEVEL_META: Record<string, { color: string; bg: string; emoji: string; name: string }> = {
-  A: { color: '#58cc02', bg: '#1a2e0a', emoji: '🌱', name: 'Beginner' },
-  B: { color: '#1cb0f6', bg: '#0a1e2e', emoji: '⚡', name: 'Intermediate' },
-  C: { color: '#ce93d8', bg: '#1e0a2e', emoji: '🔥', name: 'Advanced' },
+const LEVEL_META: Record<string, { color: string; light: string; border: string; emoji: string; name: string; desc: string }> = {
+  A: { color: '#58cc02', light: '#f0fde4', border: '#89e219', emoji: '🌱', name: 'Beginner', desc: 'Основы английского' },
+  B: { color: '#1cb0f6', light: '#e8f7ff', border: '#6dcff6', emoji: '⚡', name: 'Intermediate', desc: 'Band 5.5–6.5' },
+  C: { color: '#9b59b6', light: '#f5eeff', border: '#c39bd3', emoji: '🔥', name: 'Advanced', desc: 'Band 7+' },
 }
 
 export default function Dashboard() {
@@ -23,7 +23,6 @@ export default function Dashboard() {
   const [progress, setProgress] = useState<Progress[]>([])
   const [activeLevel, setActiveLevel] = useState('A')
   const [loading, setLoading] = useState(true)
-  const [xp, setXp] = useState(0)
 
   useEffect(() => {
     const load = async () => {
@@ -35,11 +34,7 @@ export default function Dashboard() {
         supabase.from('lessons').select('*').order('order_index'),
         supabase.from('progress').select('lesson_id, status').eq('student_id', user.id),
       ])
-      setProfile(prof)
-      setLessons(les || [])
-      setProgress(prog || [])
-      const done = (prog || []).filter((p: any) => p.status === 'completed').length
-      setXp(done * 10)
+      setProfile(prof); setLessons(les || []); setProgress(prog || [])
       setLoading(false)
     }
     load()
@@ -48,9 +43,11 @@ export default function Dashboard() {
   const getStatus = (id: number) => progress.find(p => p.lesson_id === id)?.status || 'not_started'
   const completedCount = progress.filter(p => p.status === 'completed').length
   const totalLessons = lessons.length
-  const pct = totalLessons > 0 ? Math.round(completedCount / totalLessons * 100) : 0
-  const levelLessons = lessons.filter(l => l.level === activeLevel)
+  const xp = completedCount * 10
   const streak = profile?.streak || 0
+  const levelLessons = lessons.filter(l => l.level === activeLevel)
+  const nextLessonIdx = levelLessons.findIndex(l => getStatus(l.id) !== 'completed')
+  const meta = LEVEL_META[activeLevel]
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -58,115 +55,143 @@ export default function Dashboard() {
     router.push('/auth')
   }
 
-  // Find first non-completed lesson in active level
-  const nextLessonIdx = levelLessons.findIndex(l => getStatus(l.id) !== 'completed')
-
   if (loading) return (
-    <div style={{ display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'#0a0a0f',fontFamily:'Nunito,sans-serif',color:'#5a5a7a',fontSize:'1.1rem' }}>
+    <div style={{ display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh',background:'#fff',fontFamily:'Nunito,sans-serif',color:'#afafaf',fontSize:'1.1rem',fontWeight:700 }}>
       Загрузка...
     </div>
   )
-
-  const meta = LEVEL_META[activeLevel]
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Syne:wght@700;800&display=swap');
-        * { box-sizing:border-box; margin:0; padding:0; }
-        html,body { font-family:'Nunito',sans-serif; background:#111827; color:#f9fafb; min-height:100vh; }
+        *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+        html, body { font-family:'Nunito',sans-serif; background:#f7f7f7; color:#3c3c3c; min-height:100vh; }
         ::-webkit-scrollbar { width:6px; }
-        ::-webkit-scrollbar-thumb { background:#2a2a40; border-radius:99px; }
-        
-        /* SIDEBAR */
-        .sidebar { position:fixed; left:0; top:0; bottom:0; width:260px; background:#131f2e; border-right:2px solid rgba(255,255,255,0.06); display:flex; flex-direction:column; z-index:100; }
-        .sidebar-logo { padding:24px 24px 20px; font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; }
-        .sidebar-logo span { color:#58cc02; }
-        .nav-item { display:flex; align-items:center; gap:14px; padding:14px 20px; margin:2px 12px; border-radius:14px; cursor:pointer; font-weight:700; font-size:0.95rem; color:#9ca3af; transition:all 0.15s; text-decoration:none; border:2px solid transparent; }
-        .nav-item:hover { background:rgba(255,255,255,0.05); color:#f9fafb; }
-        .nav-item.active { background:rgba(88,204,2,0.12); color:#58cc02; border-color:rgba(88,204,2,0.2); }
-        .nav-icon { width:32px; height:32px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0; }
+        ::-webkit-scrollbar-thumb { background:#e5e5e5; border-radius:99px; }
+
+        .sidebar {
+          position:fixed; left:0; top:0; bottom:0; width:256px;
+          background:#fff; border-right:2px solid #e5e5e5;
+          display:flex; flex-direction:column; z-index:100;
+        }
+        .logo { padding:24px 28px 20px; font-family:'Syne',sans-serif; font-weight:800; font-size:1.6rem; color:#3c3c3c; letter-spacing:-0.5px; }
+        .logo span { color:#58cc02; }
+
+        .nav-item {
+          display:flex; align-items:center; gap:14px;
+          padding:13px 20px; margin:2px 12px; border-radius:14px;
+          cursor:pointer; font-weight:800; font-size:0.9rem;
+          color:#afafaf; transition:all 0.15s; text-decoration:none;
+          border:2px solid transparent; letter-spacing:0.3px;
+          text-transform:uppercase;
+        }
+        .nav-item:hover { background:#f7f7f7; color:#3c3c3c; }
+        .nav-item.on { background:#ddf4c1; color:#58cc02; border-color:#b8e87a; }
+        .nav-icon { font-size:1.3rem; width:28px; text-align:center; flex-shrink:0; }
+
+        .topbar {
+          position:fixed; top:0; left:256px; right:0; height:60px;
+          background:#fff; border-bottom:2px solid #e5e5e5;
+          display:flex; align-items:center; justify-content:flex-end;
+          padding:0 32px; gap:28px; z-index:99;
+        }
+        .top-stat { display:flex; align-items:center; gap:6px; font-weight:800; font-size:1rem; }
+
+        .main { margin-left:256px; padding-top:60px; }
+        .center { max-width:640px; margin:0 auto; padding:32px 20px 80px; }
+        .right { position:fixed; top:60px; right:0; bottom:0; width:320px; padding:24px 20px; overflow-y:auto; border-left:2px solid #e5e5e5; background:#fff; }
+
+        .level-tabs { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin-bottom:24px; }
+        .level-tab {
+          padding:16px 12px; border-radius:18px; cursor:pointer;
+          border:3px solid #e5e5e5; text-align:center;
+          background:#fff; transition:all 0.2s; font-weight:800;
+        }
+        .level-tab:hover { border-color:#c8c8c8; transform:translateY(-1px); }
+        .level-tab.on { transform:translateY(-2px); box-shadow:0 4px 0 rgba(0,0,0,0.08); }
+
+        .unit-banner {
+          border-radius:18px; padding:20px 24px; margin-bottom:28px;
+          border-bottom:4px solid rgba(0,0,0,0.12);
+          display:flex; align-items:center; gap:16px;
+        }
+
+        .path { display:flex; flex-direction:column; align-items:center; padding-bottom:48px; }
+        .node-wrap { display:flex; flex-direction:column; align-items:center; }
+        .connector-line { width:3px; height:24px; border-radius:99px; }
+
+        .bubble {
+          width:76px; height:76px; border-radius:50%;
+          display:flex; align-items:center; justify-content:center;
+          font-size:1.8rem; cursor:pointer; transition:all 0.18s;
+          border:4px solid transparent; position:relative;
+          text-decoration:none; border-bottom:6px solid transparent;
+        }
+        .bubble:hover:not(.locked) { transform:scale(1.08); }
+        .bubble.current { animation:bob 1.8s ease-in-out infinite; }
+        .bubble.locked { cursor:default; filter:grayscale(1); opacity:0.4; }
+        .bubble.locked:hover { transform:none !important; }
+
+        .start-tag {
+          position:absolute; top:-40px; left:50%; transform:translateX(-50%);
+          background:#fff; color:#3c3c3c; font-weight:900; font-size:0.75rem;
+          padding:5px 14px; border-radius:99px; white-space:nowrap;
+          border:2px solid #e5e5e5; box-shadow:0 2px 8px rgba(0,0,0,0.1);
+          letter-spacing:1px;
+        }
+        .node-label { margin-top:10px; text-align:center; max-width:110px; }
+        .node-label .num { font-size:0.7rem; font-weight:800; letter-spacing:1px; text-transform:uppercase; margin-bottom:2px; }
+        .node-label .topic { font-size:0.78rem; font-weight:700; color:#afafaf; line-height:1.3; }
+        .node-label.current .topic { color:#3c3c3c; }
+
+        .rcard { background:#fff; border:2px solid #e5e5e5; border-radius:16px; padding:18px; margin-bottom:14px; border-bottom:4px solid #e5e5e5; }
+        .rcard-title { font-size:0.68rem; font-weight:800; letter-spacing:1.5px; text-transform:uppercase; color:#afafaf; margin-bottom:12px; }
+        .bar-wrap { background:#f0f0f0; border-radius:99px; height:10px; overflow:hidden; }
+        .bar-fill { height:100%; border-radius:99px; transition:width 0.5s ease; }
+
         .sidebar-bottom { margin-top:auto; padding:16px; }
-        .streak-widget { background:rgba(255,136,0,0.1); border:2px solid rgba(255,136,0,0.2); border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:12px; }
-        
-        /* TOP BAR */
-        .topbar { position:fixed; top:0; left:260px; right:0; height:64px; background:#111827; border-bottom:2px solid rgba(255,255,255,0.06); display:flex; align-items:center; justify-content:flex-end; padding:0 32px; gap:24px; z-index:99; }
-        .xp-badge { display:flex; align-items:center; gap:6px; font-weight:800; font-size:0.95rem; color:#ffc107; }
-        .streak-badge { display:flex; align-items:center; gap:6px; font-weight:800; font-size:0.95rem; color:#ff8800; }
-        .hearts { display:flex; align-items:center; gap:4px; font-weight:800; color:#ff4757; }
-        
-        /* MAIN */
-        .main { margin-left:260px; padding-top:64px; min-height:100vh; }
-        .content { max-width:680px; margin:0 auto; padding:32px 24px; }
-        
-        /* LEVEL TABS */
-        .level-tabs { display:flex; gap:10px; margin-bottom:28px; }
-        .level-tab { flex:1; padding:14px 12px; border-radius:16px; cursor:pointer; border:2px solid transparent; text-align:center; transition:all 0.2s; }
-        .level-tab.active { transform:scale(1.03); }
-        
-        /* PATH */
-        .path { display:flex; flex-direction:column; align-items:center; gap:0; padding-bottom:48px; }
-        .path-section { text-align:center; width:100%; margin-bottom:8px; padding:12px 20px; border-radius:14px; font-weight:800; font-size:0.82rem; letter-spacing:1px; text-transform:uppercase; }
-        
-        .lesson-node { position:relative; display:flex; flex-direction:column; align-items:center; margin:6px 0; }
-        .lesson-bubble { width:72px; height:72px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1.6rem; cursor:pointer; transition:all 0.2s; border:4px solid transparent; position:relative; text-decoration:none; }
-        .lesson-bubble:hover { transform:scale(1.1); }
-        .lesson-bubble.current { animation:bounce-soft 2s ease-in-out infinite; box-shadow:0 0 0 6px rgba(88,204,2,0.2); }
-        .lesson-bubble.done { opacity:0.75; }
-        .lesson-bubble.locked { cursor:default; opacity:0.4; filter:grayscale(0.5); }
-        .lesson-bubble.locked:hover { transform:none; }
-        
-        .lesson-label { margin-top:8px; font-size:0.78rem; font-weight:700; color:#6b7280; text-align:center; max-width:100px; line-height:1.3; }
-        .lesson-label.current { color:#f9fafb; font-weight:800; }
-        
-        .connector { width:3px; height:28px; background:rgba(255,255,255,0.08); border-radius:99px; }
-        .connector.done { background:rgba(88,204,2,0.3); }
-        
-        /* START BANNER */
-        .start-banner { background:linear-gradient(135deg,#1a3a0a,#0f2a05); border:2px solid #58cc02; border-radius:20px; padding:20px 24px; margin-bottom:28px; display:flex; align-items:center; gap:16px; }
-        
-        /* RIGHT PANEL */
-        .right-panel { position:fixed; right:0; top:64px; bottom:0; width:340px; padding:24px; overflow-y:auto; border-left:2px solid rgba(255,255,255,0.06); background:#111827; }
-        
-        @keyframes bounce-soft { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+        .streak-card { background:#fff7e6; border:2px solid #ffd080; border-radius:16px; padding:14px 16px; display:flex; align-items:center; gap:12px; border-bottom:4px solid #ffd080; }
+
+        @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
         @keyframes fadeUp { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
         .fade { animation:fadeUp 0.3s ease both; }
-        
-        @media (max-width:1100px) { .right-panel { display:none; } }
+
+        @media (max-width:1100px) { .right { display:none; } }
         @media (max-width:768px) { .sidebar{display:none} .main{margin-left:0} .topbar{left:0} }
       `}</style>
 
       {/* SIDEBAR */}
       <div className="sidebar">
-        <div className="sidebar-logo">Ato<span>C</span> · IELTS</div>
+        <div className="logo">Ato<span>C</span></div>
 
-        <nav style={{ flex:1, padding:'0 0 16px' }}>
+        <nav style={{ flex:1 }}>
           {[
-            { icon:'🏠', label:'Обучение', active:true },
-            { icon:'📊', label:'Рейтинги', active:false },
-            { icon:'📚', label:'Словарь', active:false },
-            { icon:'👤', label:'Профиль', active:false },
+            { icon:'🏠', label:'Обучение', on:true },
+            { icon:'🏆', label:'Рейтинги', on:false },
+            { icon:'📚', label:'Словарь', on:false },
+            { icon:'👤', label:'Профиль', on:false },
           ].map(item => (
-            <div key={item.label} className={`nav-item ${item.active?'active':''}`}>
-              <div className="nav-icon" style={{ background:item.active?'rgba(88,204,2,0.15)':'rgba(255,255,255,0.05)' }}>{item.icon}</div>
+            <div key={item.label} className={`nav-item ${item.on?'on':''}`}>
+              <span className="nav-icon">{item.icon}</span>
               {item.label}
             </div>
           ))}
 
-          <div style={{ margin:'16px 12px 8px',height:1,background:'rgba(255,255,255,0.06)'}}/>
+          <div style={{ margin:'12px 12px 0',height:2,background:'#f0f0f0',borderRadius:99 }}/>
 
-          <div className="nav-item" onClick={handleLogout} style={{ color:'#6b7280' }}>
-            <div className="nav-icon" style={{ background:'rgba(255,255,255,0.04)' }}>🚪</div>
+          <div className="nav-item" style={{ marginTop:4 }} onClick={handleLogout}>
+            <span className="nav-icon">🚪</span>
             Выйти
           </div>
         </nav>
 
         <div className="sidebar-bottom">
-          <div className="streak-widget">
-            <span style={{ fontSize:'1.8rem' }}>🔥</span>
+          <div className="streak-card">
+            <span style={{ fontSize:'2rem' }}>🔥</span>
             <div>
-              <div style={{ fontWeight:900,fontSize:'1.2rem',color:'#ff8800' }}>{streak} дней</div>
-              <div style={{ fontSize:'0.75rem',color:'#9ca3af',fontWeight:600 }}>Streak подряд</div>
+              <div style={{ fontWeight:900,fontSize:'1.3rem',color:'#ff9600',fontFamily:'Syne,sans-serif' }}>{streak} дней</div>
+              <div style={{ fontSize:'0.75rem',color:'#afafaf',fontWeight:700 }}>Streak подряд</div>
             </div>
           </div>
         </div>
@@ -174,64 +199,59 @@ export default function Dashboard() {
 
       {/* TOPBAR */}
       <div className="topbar">
-        <div className="streak-badge">🔥 {streak}</div>
-        <div className="xp-badge">⚡ {xp} XP</div>
-        <div className="hearts">❤️ {Math.max(0, 5 - Math.floor((totalLessons - completedCount) / 10))}</div>
-        <div style={{ width:1,height:24,background:'rgba(255,255,255,0.1)',margin:'0 4px'}}/>
-        <span style={{ fontSize:'0.85rem',color:'#6b7280',fontWeight:700 }}>{profile?.full_name || 'Студент'}</span>
+        <div className="top-stat" style={{ color:'#ff9600' }}>🔥 <span>{streak}</span></div>
+        <div className="top-stat" style={{ color:'#1cb0f6' }}>⚡ <span>{xp} XP</span></div>
+        <div className="top-stat" style={{ color:'#ff4757' }}>❤️ <span>5</span></div>
+        <div style={{ width:2,height:24,background:'#e5e5e5' }}/>
+        <span style={{ fontSize:'0.88rem',color:'#afafaf',fontWeight:800 }}>{profile?.full_name?.split(' ')[0] || 'Студент'}</span>
       </div>
 
       {/* MAIN */}
       <div className="main">
-        <div className="content">
+        <div className="center">
 
           {/* Level tabs */}
           <div className="level-tabs fade">
             {(['A','B','C'] as const).map(lvl => {
               const m = LEVEL_META[lvl]
               const lvlLes = lessons.filter(l => l.level === lvl)
-              const lvlDone = lvlLes.filter(l => getStatus(l.id) === 'completed').length
-              const isActive = activeLevel === lvl
+              const done = lvlLes.filter(l => getStatus(l.id) === 'completed').length
+              const isOn = activeLevel === lvl
               return (
-                <div key={lvl} className={`level-tab ${isActive?'active':''}`}
+                <div key={lvl} className={`level-tab ${isOn?'on':''}`}
                   onClick={() => setActiveLevel(lvl)}
-                  style={{ background:isActive?m.bg:'rgba(255,255,255,0.03)', borderColor:isActive?m.color:'rgba(255,255,255,0.06)', color:isActive?m.color:'#6b7280' }}>
-                  <div style={{ fontSize:'1.4rem',marginBottom:4 }}>{m.emoji}</div>
-                  <div style={{ fontWeight:900,fontSize:'0.9rem' }}>Уровень {lvl}</div>
-                  <div style={{ fontSize:'0.72rem',marginTop:2,opacity:0.7 }}>{m.name}</div>
-                  <div style={{ fontSize:'0.72rem',fontWeight:700,marginTop:4 }}>{lvlDone}/{lvlLes.length}</div>
+                  style={{ borderColor:isOn?m.border:'#e5e5e5', background:isOn?m.light:'#fff', boxShadow:isOn?`0 4px 0 ${m.border}`:'0 4px 0 #e5e5e5' }}>
+                  <div style={{ fontSize:'1.6rem',marginBottom:6 }}>{m.emoji}</div>
+                  <div style={{ fontSize:'0.85rem',fontWeight:900,color:isOn?m.color:'#afafaf' }}>Уровень {lvl}</div>
+                  <div style={{ fontSize:'0.7rem',color:'#afafaf',marginTop:2,fontWeight:700 }}>{m.name}</div>
+                  <div style={{ fontSize:'0.72rem',fontWeight:800,color:isOn?m.color:'#c8c8c8',marginTop:6 }}>{done}/{lvlLes.length}</div>
                 </div>
               )
             })}
           </div>
 
-          {/* Section banner */}
-          <div className="start-banner fade" style={{ background:`linear-gradient(135deg,${meta.bg},rgba(0,0,0,0.3))`, borderColor:meta.color }}>
-            <span style={{ fontSize:'2.5rem' }}>{meta.emoji}</span>
+          {/* Unit banner */}
+          <div className="unit-banner fade" style={{ background:meta.light, borderColor:meta.border, borderBottom:`4px solid ${meta.border}` }}>
+            <div style={{ width:52,height:52,borderRadius:16,background:meta.color,display:'flex',alignItems:'center',justifyContent:'center',fontSize:'1.8rem',flexShrink:0,boxShadow:`0 4px 0 ${meta.border}` }}>
+              {meta.emoji}
+            </div>
             <div style={{ flex:1 }}>
-              <div style={{ fontSize:'0.72rem',fontWeight:800,letterSpacing:1.5,textTransform:'uppercase',color:meta.color,marginBottom:4 }}>
+              <div style={{ fontSize:'0.7rem',fontWeight:900,letterSpacing:1.5,textTransform:'uppercase',color:meta.color,marginBottom:4 }}>
                 УРОВЕНЬ {activeLevel} · {meta.name.toUpperCase()}
               </div>
-              <div style={{ fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'1.1rem',color:'#f9fafb' }}>
-                {activeLevel === 'A' ? 'Основы английского для IELTS' : activeLevel === 'B' ? 'Средний уровень — Band 5.5–6.5' : 'Продвинутый — Band 7+'}
-              </div>
-              <div style={{ fontSize:'0.8rem',color:'#9ca3af',marginTop:4 }}>
-                {levelLessons.filter(l=>getStatus(l.id)==='completed').length} из {levelLessons.length} уроков пройдено
+              <div style={{ fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'1.1rem',color:'#3c3c3c' }}>{meta.desc}</div>
+              <div style={{ fontSize:'0.8rem',color:'#afafaf',marginTop:3,fontWeight:700 }}>
+                {levelLessons.filter(l=>getStatus(l.id)==='completed').length} из {levelLessons.length} уроков
               </div>
             </div>
-            {/* Progress circle */}
-            <div style={{ position:'relative',width:52,height:52,flexShrink:0 }}>
-              <svg width="52" height="52" style={{ transform:'rotate(-90deg)' }}>
-                <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="4"/>
-                <circle cx="26" cy="26" r="22" fill="none" stroke={meta.color} strokeWidth="4"
-                  strokeDasharray={`${2*Math.PI*22}`}
-                  strokeDashoffset={`${2*Math.PI*22*(1-levelLessons.filter(l=>getStatus(l.id)==='completed').length/Math.max(levelLessons.length,1))}`}
-                  strokeLinecap="round" style={{ transition:'stroke-dashoffset 0.6s ease' }}/>
-              </svg>
-              <div style={{ position:'absolute',inset:0,display:'flex',alignItems:'center',justifyContent:'center',fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'0.75rem',color:meta.color }}>
-                {Math.round(levelLessons.filter(l=>getStatus(l.id)==='completed').length/Math.max(levelLessons.length,1)*100)}%
-              </div>
-            </div>
+            {/* Mini ring */}
+            <svg width="48" height="48" style={{ flexShrink:0, transform:'rotate(-90deg)' }}>
+              <circle cx="24" cy="24" r="20" fill="none" stroke="rgba(0,0,0,0.08)" strokeWidth="4"/>
+              <circle cx="24" cy="24" r="20" fill="none" stroke={meta.color} strokeWidth="4"
+                strokeDasharray={`${2*Math.PI*20}`}
+                strokeDashoffset={`${2*Math.PI*20*(1-levelLessons.filter(l=>getStatus(l.id)==='completed').length/Math.max(levelLessons.length,1))}`}
+                strokeLinecap="round" style={{ transition:'stroke-dashoffset 0.6s ease' }}/>
+            </svg>
           </div>
 
           {/* PATH */}
@@ -240,50 +260,49 @@ export default function Dashboard() {
               const status = getStatus(lesson.id)
               const isCurrent = i === nextLessonIdx
               const isDone = status === 'completed'
-              const isLocked = !isDone && !isCurrent && i > nextLessonIdx
+              const isLocked = !isDone && i > nextLessonIdx
 
-              // Zigzag offset
-              const offsets = [0, 60, 100, 60, 0, -60, -100, -60]
-              const offset = offsets[i % 8]
-
-              const bubbleStyle = isDone
-                ? { background:`linear-gradient(135deg,${meta.color},${meta.color}cc)`, borderColor:`${meta.color}80` }
-                : isCurrent
-                ? { background:`linear-gradient(135deg,${meta.color},${meta.color}aa)`, borderColor:meta.color, boxShadow:`0 0 24px ${meta.color}60` }
-                : { background:'#1f2937', borderColor:'rgba(255,255,255,0.1)' }
+              // Zigzag
+              const pattern = [0, 70, 110, 70, 0, -70, -110, -70]
+              const offset = pattern[i % 8]
 
               return (
-                <div key={lesson.id} className="lesson-node" style={{ marginLeft:offset }}>
-                  {i > 0 && <div className={`connector ${isDone?'done':''}`}/>}
+                <div key={lesson.id} className="node-wrap" style={{ marginLeft:offset }}>
+                  {i > 0 && (
+                    <div className="connector-line" style={{ background: isDone ? meta.color : '#e5e5e5', opacity: isDone ? 0.5 : 1 }}/>
+                  )}
 
-                  <Link href={isLocked ? '#' : `/lesson/${lesson.id}`}
-                    className={`lesson-bubble ${isCurrent?'current':''} ${isDone?'done':''} ${isLocked?'locked':''}`}
-                    style={bubbleStyle}
-                    onClick={e => isLocked && e.preventDefault()}>
-                    {isDone ? '⭐' : isCurrent ? '▶' : isLocked ? '🔒' : '○'}
+                  <div style={{ position:'relative', marginTop:4 }}>
+                    {isCurrent && <div className="start-tag" style={{ color:meta.color, borderColor:meta.border }}>НАЧАТЬ</div>}
 
-                    {/* Current indicator */}
-                    {isCurrent && (
-                      <div style={{ position:'absolute',top:-36,left:'50%',transform:'translateX(-50%)',background:meta.color,color:'#000',fontWeight:900,fontSize:'0.72rem',padding:'4px 10px',borderRadius:99,whiteSpace:'nowrap',letterSpacing:0.5 }}>
-                        НАЧАТЬ
-                      </div>
-                    )}
-                  </Link>
+                    <Link href={isLocked ? '#' : `/lesson/${lesson.id}`}
+                      className={`bubble ${isCurrent?'current':''} ${isDone?'done':''} ${isLocked?'locked':''}`}
+                      onClick={e => isLocked && e.preventDefault()}
+                      style={{
+                        background: isDone ? meta.color : isCurrent ? meta.color : '#e5e5e5',
+                        borderColor: isDone ? meta.border : isCurrent ? meta.border : '#d0d0d0',
+                        borderBottomColor: isDone ? meta.border : isCurrent ? meta.border : '#c0c0c0',
+                        boxShadow: isCurrent ? `0 0 0 6px ${meta.light}, 0 0 0 8px ${meta.border}` : 'none',
+                      }}>
+                      {isDone ? '⭐' : isCurrent ? '▶' : isLocked ? '🔒' : '⬤'}
+                    </Link>
+                  </div>
 
-                  <div className={`lesson-label ${isCurrent?'current':''}`}>
-                    <div style={{ fontSize:'0.7rem',color:meta.color,fontWeight:800,marginBottom:2 }}>{lesson.level}{lesson.lesson_number}</div>
-                    {lesson.grammar_topic?.split('·')[0]?.trim() || lesson.title}
+                  <div className={`node-label ${isCurrent?'current':''}`}>
+                    <div className="num" style={{ color: isDone || isCurrent ? meta.color : '#c8c8c8' }}>
+                      {lesson.level}{lesson.lesson_number}
+                    </div>
+                    <div className="topic">{lesson.grammar_topic?.split('·')[0]?.trim() || lesson.title}</div>
                   </div>
                 </div>
               )
             })}
 
-            {/* Level complete */}
-            {levelLessons.every(l => getStatus(l.id) === 'completed') && levelLessons.length > 0 && (
-              <div style={{ marginTop:24, textAlign:'center' }}>
-                <div style={{ fontSize:'3rem',marginBottom:8 }}>🏆</div>
-                <div style={{ fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'1.2rem',color:meta.color }}>Уровень {activeLevel} пройден!</div>
-                <div style={{ color:'#6b7280',fontSize:'0.85rem',marginTop:4 }}>Переходи на следующий уровень</div>
+            {levelLessons.length > 0 && levelLessons.every(l => getStatus(l.id) === 'completed') && (
+              <div style={{ textAlign:'center',marginTop:32 }}>
+                <div style={{ fontSize:'3rem',marginBottom:10 }}>🏆</div>
+                <div style={{ fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:'1.2rem',color:meta.color }}>Уровень {activeLevel} завершён!</div>
+                <div style={{ color:'#afafaf',fontSize:'0.85rem',marginTop:4,fontWeight:700 }}>Переходи на следующий уровень</div>
               </div>
             )}
           </div>
@@ -291,47 +310,48 @@ export default function Dashboard() {
       </div>
 
       {/* RIGHT PANEL */}
-      <div className="right-panel">
+      <div className="right">
 
-        {/* Daily goal */}
-        <div style={{ background:'#1f2937',borderRadius:16,padding:'18px',marginBottom:16,border:'1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize:'0.72rem',fontWeight:800,letterSpacing:1.5,color:'#6b7280',textTransform:'uppercase',marginBottom:12 }}>ДНЕВНАЯ ЦЕЛЬ</div>
-          <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:10 }}>
-            <span style={{ fontSize:'1.5rem' }}>⚡</span>
+        {/* XP goal */}
+        <div className="rcard">
+          <div className="rcard-title">Дневная цель</div>
+          <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:10 }}>
+            <span style={{ fontSize:'1.8rem' }}>⚡</span>
             <div style={{ flex:1 }}>
-              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
-                <span style={{ fontSize:'0.82rem',fontWeight:700 }}>{xp % 50} / 50 XP</span>
-                <span style={{ fontSize:'0.75rem',color:'#6b7280' }}>сегодня</span>
+              <div style={{ display:'flex',justifyContent:'space-between',marginBottom:6 }}>
+                <span style={{ fontWeight:800,fontSize:'0.88rem' }}>{xp % 50} / 50 XP</span>
+                <span style={{ fontSize:'0.75rem',color:'#afafaf',fontWeight:700 }}>сегодня</span>
               </div>
-              <div style={{ background:'rgba(255,255,255,0.08)',borderRadius:99,height:8,overflow:'hidden' }}>
-                <div style={{ height:'100%',width:`${Math.min((xp%50)/50*100,100)}%`,background:'linear-gradient(90deg,#ffc107,#ff8800)',borderRadius:99,transition:'width 0.4s' }}/>
+              <div className="bar-wrap">
+                <div className="bar-fill" style={{ width:`${Math.min((xp%50)/50*100,100)}%`, background:'linear-gradient(90deg,#ffc107,#ff8800)' }}/>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Overall progress */}
-        <div style={{ background:'#1f2937',borderRadius:16,padding:'18px',marginBottom:16,border:'1px solid rgba(255,255,255,0.06)' }}>
-          <div style={{ fontSize:'0.72rem',fontWeight:800,letterSpacing:1.5,color:'#6b7280',textTransform:'uppercase',marginBottom:14 }}>МОЙ ПРОГРЕСС</div>
+        {/* Progress */}
+        <div className="rcard">
+          <div className="rcard-title">Мой прогресс</div>
           <div style={{ display:'flex',justifyContent:'space-between',marginBottom:6 }}>
-            <span style={{ fontSize:'0.88rem',fontWeight:700 }}>Общий курс</span>
-            <span style={{ fontSize:'0.82rem',color:'#6b7280' }}>{completedCount}/{totalLessons}</span>
+            <span style={{ fontWeight:800,fontSize:'0.88rem' }}>Весь курс</span>
+            <span style={{ fontSize:'0.8rem',color:'#afafaf',fontWeight:700 }}>{completedCount}/{totalLessons}</span>
           </div>
-          <div style={{ background:'rgba(255,255,255,0.08)',borderRadius:99,height:10,overflow:'hidden',marginBottom:16 }}>
-            <div style={{ height:'100%',width:`${pct}%`,background:'linear-gradient(90deg,#58cc02,#00d4aa)',borderRadius:99,transition:'width 0.6s' }}/>
+          <div className="bar-wrap" style={{ marginBottom:18 }}>
+            <div className="bar-fill" style={{ width:`${totalLessons>0?completedCount/totalLessons*100:0}%`, background:'linear-gradient(90deg,#58cc02,#1cb0f6)' }}/>
           </div>
-          {['A','B','C'].map(lvl => {
+          {(['A','B','C'] as const).map(lvl => {
             const m = LEVEL_META[lvl]
-            const lvlLes = lessons.filter(l => l.level === lvl)
-            const done = lvlLes.filter(l => getStatus(l.id) === 'completed').length
+            const lvlLes = lessons.filter(l=>l.level===lvl)
+            const done = lvlLes.filter(l=>getStatus(l.id)==='completed').length
+            const pct = lvlLes.length > 0 ? done/lvlLes.length*100 : 0
             return (
-              <div key={lvl} style={{ marginBottom:10 }}>
-                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:4 }}>
-                  <span style={{ fontSize:'0.78rem',fontWeight:700,color:m.color }}>{m.emoji} Уровень {lvl}</span>
-                  <span style={{ fontSize:'0.72rem',color:'#6b7280' }}>{done}/{lvlLes.length}</span>
+              <div key={lvl} style={{ marginBottom:12 }}>
+                <div style={{ display:'flex',justifyContent:'space-between',marginBottom:5 }}>
+                  <span style={{ fontSize:'0.8rem',fontWeight:800,color:m.color }}>{m.emoji} Уровень {lvl}</span>
+                  <span style={{ fontSize:'0.73rem',color:'#afafaf',fontWeight:700 }}>{done}/{lvlLes.length}</span>
                 </div>
-                <div style={{ background:'rgba(255,255,255,0.06)',borderRadius:99,height:6,overflow:'hidden' }}>
-                  <div style={{ height:'100%',width:`${lvlLes.length>0?done/lvlLes.length*100:0}%`,background:m.color,borderRadius:99,transition:'width 0.5s' }}/>
+                <div className="bar-wrap" style={{ height:8 }}>
+                  <div className="bar-fill" style={{ width:`${pct}%`, background:m.color }}/>
                 </div>
               </div>
             )
@@ -339,18 +359,20 @@ export default function Dashboard() {
         </div>
 
         {/* Streak */}
-        <div style={{ background:'linear-gradient(135deg,#2d1a00,#1a0f00)',borderRadius:16,padding:'18px',border:'2px solid rgba(255,136,0,0.2)' }}>
-          <div style={{ display:'flex',alignItems:'center',gap:10,marginBottom:8 }}>
-            <span style={{ fontSize:'2rem' }}>🔥</span>
+        <div className="rcard" style={{ background:'#fff7e6',borderColor:'#ffd080',borderBottomColor:'#ffc107' }}>
+          <div style={{ display:'flex',alignItems:'center',gap:12,marginBottom:10 }}>
+            <span style={{ fontSize:'2.2rem' }}>🔥</span>
             <div>
-              <div style={{ fontFamily:'Syne,sans-serif',fontWeight:800,fontSize:'1.4rem',color:'#ff8800' }}>{streak} дней</div>
-              <div style={{ fontSize:'0.75rem',color:'#9ca3af' }}>Streak подряд</div>
+              <div style={{ fontFamily:'Syne,sans-serif',fontWeight:900,fontSize:'1.5rem',color:'#ff9600' }}>{streak} дней</div>
+              <div style={{ fontSize:'0.75rem',color:'#afafaf',fontWeight:700 }}>Streak подряд</div>
             </div>
           </div>
-          <div style={{ fontSize:'0.78rem',color:'#9ca3af',lineHeight:1.5 }}>
-            Учись каждый день чтобы не потерять streak! Лучший результат: <span style={{ color:'#ff8800',fontWeight:700 }}>{profile?.longest_streak || 0} дней</span>
+          <div style={{ fontSize:'0.8rem',color:'#afafaf',lineHeight:1.55,fontWeight:600 }}>
+            Учись каждый день и не теряй streak!<br/>
+            Рекорд: <span style={{ color:'#ff9600',fontWeight:800 }}>{profile?.longest_streak || 0} дней</span>
           </div>
         </div>
+
       </div>
     </>
   )
