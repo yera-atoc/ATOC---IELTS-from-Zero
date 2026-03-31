@@ -22,25 +22,81 @@ function countWords(text: string) {
 }
 
 const LESSON_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap');
-  .lb { font-family: 'DM Sans', sans-serif; color: #d8d8e8; line-height: 1.8; font-size: 0.95rem; }
-  .lb p { margin: 10px 0; }
-  .lb strong { color: #f0f0ff; font-weight: 700; }
-  .lb em { color: #b8b4ff; font-style: italic; }
-  .lb h1,.lb h2,.lb h3 { font-family: 'Syne', sans-serif; color: #f0f0ff; margin: 28px 0 12px; font-weight: 800; }
-  .lb table { width: 100%; border-collapse: collapse; margin: 18px 0; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08); }
-  .lb td, .lb th { padding: 11px 16px; border: 1px solid rgba(255,255,255,0.06); vertical-align: top; font-size: 0.88rem; }
-  .lb tr:first-child td { background: rgba(124,111,255,0.18); font-weight: 700; color: #d0ccff; font-size: 0.82rem; letter-spacing: 0.3px; }
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+  
+  .lb { font-family: 'DM Sans', sans-serif; color: #cccce0; line-height: 1.85; font-size: 1rem; }
+  
+  /* Hide ugly docx header table (first table = A to C / IELTS FROM ZERO) */
+  .lb table:first-of-type { display: none !important; }
+  
+  .lb p { margin: 12px 0; }
+  .lb strong { color: #eeeeff; font-weight: 600; }
+  .lb em { color: #a8a4d8; font-style: italic; }
+  
+  /* Section headers (Grammar 1, Grammar 2 etc) */
+  .lb > p > strong:only-child,
+  .lb > p strong { color: #f0f0ff; }
+  
+  .lb p strong:only-child {
+    display: block;
+    font-family: 'Syne', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #e8e8ff;
+    margin: 28px 0 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  
+  /* Tables */
+  .lb table { width: 100%; border-collapse: collapse; margin: 20px 0; border-radius: 12px; overflow: hidden; border: 1px solid rgba(255,255,255,0.07); }
+  .lb td, .lb th { padding: 12px 16px; border: 1px solid rgba(255,255,255,0.05); vertical-align: top; font-size: 0.9rem; line-height: 1.6; }
+  
+  /* Header row of tables */
+  .lb tr:first-child td, .lb thead td, .lb th {
+    background: rgba(124,111,255,0.14) !important;
+    font-weight: 700;
+    color: #c8c4ff;
+    font-size: 0.82rem;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+  }
   .lb tr.odd td { background: rgba(255,255,255,0.02); }
-  .lb tr.even td { background: rgba(255,255,255,0.05); }
-  .lb ul,.lb ol { padding-left: 22px; margin: 10px 0; }
-  .lb li { margin: 7px 0; }
-  .lb blockquote { border-left: 3px solid #7c6fff; padding: 14px 18px; background: rgba(124,111,255,0.07); border-radius: 0 10px 10px 0; margin: 18px 0; color: #c8c4ff; }
-  /* Tip boxes - tables with IELTS hints */
-  .lb table:has(td:first-child:contains("IELTS")) { background: rgba(0,212,170,0.05); border-color: rgba(0,212,170,0.2); }
-  /* Exercise boxes */
-  .lb table:has(td:first-child:contains("Задание")) td,
-  .lb table:has(td:first-child:contains("задание")) td { background: rgba(255,193,7,0.04) !important; border-color: rgba(255,193,7,0.12) !important; }
+  .lb tr.even td { background: rgba(255,255,255,0.045); }
+  .lb tr:hover td { background: rgba(124,111,255,0.06) !important; }
+  
+  /* Single-column tables = tip/exercise boxes */
+  .lb table:not(:first-of-type) colgroup col[style*="100%"] ~ col:not(:first-child),
+  .lb table:has(colgroup col[style*="100%"]):not(:first-of-type) {
+    border: none;
+  }
+  .lb table:not(:first-of-type):has(colgroup:only-child col[style*="100%"]) {
+    background: rgba(0,212,170,0.04);
+    border-color: rgba(0,212,170,0.15);
+    border-radius: 12px;
+  }
+  .lb table:not(:first-of-type):has(colgroup:only-child col[style*="100%"]) td {
+    border: none;
+    padding: 16px 20px;
+  }
+  
+  /* Lists */
+  .lb ul, .lb ol { padding-left: 24px; margin: 12px 0; }
+  .lb li { margin: 8px 0; line-height: 1.7; }
+  
+  /* Blockquotes */
+  .lb blockquote { 
+    border-left: 3px solid #7c6fff; 
+    padding: 14px 20px; 
+    background: rgba(124,111,255,0.06); 
+    border-radius: 0 12px 12px 0; 
+    margin: 20px 0; 
+    color: #b8b4e8;
+    font-style: italic;
+  }
+  
+  /* Horizontal rules */
+  .lb hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 24px 0; }
 `
 
 export default function LessonPage() {
