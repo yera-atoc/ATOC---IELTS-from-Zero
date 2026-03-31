@@ -162,11 +162,11 @@ CREATE POLICY "submissions_own" ON submissions FOR SELECT USING (
   student_id = auth.uid() OR
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'teacher')
 );
-CREATE POLICY "submissions_insert" ON submissions FOR INSERT WITH CHECK (student_id = auth.uid());
+CREATE POLICY "submissions_insert" ON submissions FOR INSERT TO authenticated WITH CHECK (student_id = auth.uid());
 
 -- Фидбэк: все авторизованные видят, только учитель пишет
 CREATE POLICY "feedback_read" ON feedback FOR SELECT TO authenticated USING (true);
-CREATE POLICY "feedback_teacher_write" ON feedback FOR INSERT USING (
+CREATE POLICY "feedback_teacher_write" ON feedback FOR INSERT TO authenticated WITH CHECK (
   EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'teacher')
 );
 

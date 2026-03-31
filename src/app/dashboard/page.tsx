@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 type Lesson = { id: number; level: string; lesson_number: number; title: string; grammar_topic: string; pdf_url: string | null }
 type Progress = { lesson_id: number; status: string }
 type Profile = { full_name: string; email: string; current_level: string }

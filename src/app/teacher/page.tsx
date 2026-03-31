@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 type Student = { id: string; full_name: string; email: string; current_level: string; created_at: string }
 type Submission = {
   id: number; task_type: string; content: string; status: string; submitted_at: string;

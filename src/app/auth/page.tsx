@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase'
 
+export const dynamic = 'force-dynamic'
+
 export default function AuthPage() {
   const router = useRouter()
   const [mode, setMode] = useState<'login' | 'register'>('login')
