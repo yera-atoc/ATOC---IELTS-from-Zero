@@ -1,14 +1,14 @@
 'use client'
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase'
 
-export const dynamic = 'force-dynamic'
-
 type Lesson = { id: number; level: string; lesson_number: number; title: string; grammar_topic: string; pdf_url: string | null }
 type Progress = { lesson_id: number; status: string }
-type Profile = { full_name: string; email: string; current_level: string }
+type Profile = { full_name: string; email: string }
 
 export default function Dashboard() {
   const router = useRouter()
@@ -23,7 +23,6 @@ export default function Dashboard() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) { router.push('/auth'); return }
-
       const [{ data: prof }, { data: les }, { data: prog }] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('lessons').select('*').order('order_index'),
@@ -37,13 +36,13 @@ export default function Dashboard() {
     load()
   }, [router])
 
-  const getStatus = (lessonId: number) =>
-    progress.find(p => p.lesson_id === lessonId)?.status || 'not_started'
-
+  const getStatus = (id: number) => progress.find(p => p.lesson_id === id)?.status || 'not_started'
   const completedCount = progress.filter(p => p.status === 'completed').length
+  const inProgressCount = progress.filter(p => p.status === 'in_progress').length
   const totalLessons = lessons.length
-
   const levelLessons = lessons.filter(l => l.level === activeLevel)
+
+  const levelColors: Record<string, string> = { A: 'var(--accent-a)', B: 'var(--accent-b)', C: 'var(--accent-c)' }
 
   const handleLogout = async () => {
     const supabase = createClient()
@@ -51,99 +50,101 @@ export default function Dashboard() {
     router.push('/auth')
   }
 
-  if (loading) return <div className="loading">Загрузка...</div>
+  if (loading) return (
+    <div className="loading">
+      <div><span className="loading-dot"/><span className="loading-dot"/><span className="loading-dot"/></div>
+    </div>
+  )
 
   return (
     <>
       <nav className="navbar">
         <div className="navbar-brand">Ato<span>C</span> · IELTS</div>
-        <div>
-          <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', marginRight: 16 }}>
-            {profile?.full_name || profile?.email}
-          </span>
-          <button onClick={handleLogout}
-            style={{ background: 'none', border: '1px solid rgba(255,255,255,0.3)', color: 'white', padding: '6px 14px', borderRadius: 6, cursor: 'pointer', fontSize: '0.85rem' }}>
-            Выйти
-          </button>
+        <div className="navbar-right">
+          <span className="navbar-user">{profile?.full_name || profile?.email}</span>
+          <button onClick={handleLogout} className="btn btn-ghost btn-sm">Выйти</button>
         </div>
       </nav>
 
       <div className="container">
         <div className="page-header">
-          <h1 className="page-title">Мои уроки</h1>
-          <p className="page-subtitle">Привет, {profile?.full_name || 'студент'} 👋</p>
+          <h1 className="page-title">Привет, {profile?.full_name?.split(' ')[0] || 'студент'} 👋</h1>
+          <p className="page-subtitle">Продолжай учиться — ты на правильном пути</p>
         </div>
 
         {/* Stats */}
         <div className="stats-grid">
           <div className="stat-card">
             <div className="stat-number">{completedCount}</div>
-            <div className="stat-label">Уроков пройдено</div>
+            <div className="stat-label">Пройдено</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">{totalLessons - completedCount}</div>
-            <div className="stat-label">Осталось</div>
+            <div className="stat-number" style={{ color: 'var(--gold)' }}>{inProgressCount}</div>
+            <div className="stat-label">В процессе</div>
           </div>
           <div className="stat-card">
-            <div className="stat-number">{totalLessons > 0 ? Math.round(completedCount / totalLessons * 100) : 0}%</div>
+            <div className="stat-number" style={{ color: 'var(--accent3)' }}>{totalLessons > 0 ? Math.round(completedCount / totalLessons * 100) : 0}%</div>
             <div className="stat-label">Прогресс</div>
           </div>
         </div>
 
         {/* Progress bar */}
-        <div className="card" style={{ padding: '16px 20px', marginBottom: 24 }}>
-          <div className="flex-between" style={{ marginBottom: 8 }}>
-            <span style={{ fontWeight: 600, fontSize: '0.9rem' }}>Общий прогресс</span>
-            <span className="text-muted">{completedCount} / {totalLessons}</span>
+        <div className="card" style={{ padding: '18px 20px', marginBottom: 24 }}>
+          <div className="flex-between" style={{ marginBottom: 10 }}>
+            <span style={{ fontWeight: 600, fontSize: '0.88rem' }}>Общий прогресс курса</span>
+            <span className="text-muted">{completedCount} / {totalLessons} уроков</span>
           </div>
-          <div className="progress-bar-wrap">
-            <div className="progress-bar-fill"
-              style={{ width: `${totalLessons > 0 ? completedCount / totalLessons * 100 : 0}%` }} />
+          <div className="progress-wrap">
+            <div className="progress-fill" style={{ width: `${totalLessons > 0 ? completedCount / totalLessons * 100 : 0}%` }} />
           </div>
         </div>
 
         {/* Level tabs */}
         <div className="tabs">
-          {['A', 'B', 'C'].map(level => (
-            <button key={level} className={`tab ${activeLevel === level ? 'active' : ''}`}
-              onClick={() => setActiveLevel(level)}>
-              Уровень {level}
-              <span style={{ marginLeft: 6, fontSize: '0.8rem', color: '#999' }}>
-                ({lessons.filter(l => l.level === level && getStatus(l.id) === 'completed').length}/
-                {lessons.filter(l => l.level === level).length})
-              </span>
-            </button>
-          ))}
+          {(['A', 'B', 'C'] as const).map(level => {
+            const lvlLessons = lessons.filter(l => l.level === level)
+            const lvlDone = lvlLessons.filter(l => getStatus(l.id) === 'completed').length
+            return (
+              <button key={level} className={`tab ${activeLevel === level ? 'active' : ''}`} onClick={() => setActiveLevel(level)}>
+                <span style={{ color: activeLevel === level ? levelColors[level] : undefined }}>Уровень {level}</span>
+                <br/>
+                <span style={{ fontSize: '0.72rem', opacity: 0.7 }}>{lvlDone}/{lvlLessons.length}</span>
+              </button>
+            )
+          })}
         </div>
 
-        {/* Lessons grid */}
+        {/* Level progress */}
+        <div style={{ marginBottom: 16 }}>
+          <div className="progress-wrap">
+            <div className="progress-fill" style={{
+              width: `${levelLessons.length > 0 ? levelLessons.filter(l => getStatus(l.id) === 'completed').length / levelLessons.length * 100 : 0}%`,
+              background: levelColors[activeLevel]
+            }} />
+          </div>
+        </div>
+
+        {/* Lessons */}
         <div className="lessons-grid">
           {levelLessons.map(lesson => {
             const status = getStatus(lesson.id)
             return (
               <Link key={lesson.id} href={`/lesson/${lesson.id}`}
                 className={`lesson-card level-${lesson.level.toLowerCase()} ${status === 'completed' ? 'completed' : ''}`}>
-                <div className="flex-between" style={{ marginBottom: 8 }}>
-                  <div className="lesson-number">{lesson.level}{lesson.lesson_number}</div>
+                <div className="lesson-num">{lesson.level}{lesson.lesson_number}</div>
+                <div className="lesson-title">{lesson.title.replace(`${lesson.level}${lesson.lesson_number} · `, '').replace(`${lesson.level}${lesson.lesson_number} · `, '')}</div>
+                <div className="lesson-topic">{lesson.grammar_topic}</div>
+                <div className="lesson-footer">
                   <span className={`badge badge-${status}`}>
                     {status === 'completed' ? '✓ Пройден' : status === 'in_progress' ? '↻ В процессе' : '○ Не начат'}
                   </span>
+                  {lesson.pdf_url && <span style={{ fontSize: '0.75rem', color: 'var(--text3)' }}>📄 PDF</span>}
                 </div>
-                <div className="lesson-title">{lesson.title}</div>
-                <div className="lesson-topic">{lesson.grammar_topic}</div>
-                {lesson.pdf_url && (
-                  <div style={{ marginTop: 10, fontSize: '0.8rem', color: '#2980b9' }}>📄 PDF доступен</div>
-                )}
               </Link>
             )
           })}
-          {levelLessons.length === 0 && (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: 40, color: '#999' }}>
-              Уроки уровня {activeLevel} скоро появятся
-            </div>
-          )}
         </div>
-        <div style={{ height: 40 }} />
+        <div style={{ height: 48 }} />
       </div>
     </>
   )
