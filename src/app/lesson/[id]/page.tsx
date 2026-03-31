@@ -89,7 +89,7 @@ export default function LessonPage() {
         try {
           const { data: htmlData } = supabase.storage
             .from('lessons')
-            .getPublicUrl(`html/${htmlKey}.html`)
+            .getPublicUrl(`${htmlKey}.html`)
           
           const res = await fetch(htmlData.publicUrl)
           if (res.ok) {
