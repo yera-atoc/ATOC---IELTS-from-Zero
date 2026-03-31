@@ -15,10 +15,9 @@ export default function AuthPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
-  const supabase = createClient()
-
   const handleLogin = async () => {
     setLoading(true); setError('')
+    const supabase = createClient()
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) { setError('Неверный email или пароль'); setLoading(false); return }
     const { data: profile } = await supabase
@@ -29,6 +28,7 @@ export default function AuthPage() {
 
   const handleRegister = async () => {
     setLoading(true); setError('')
+    const supabase = createClient()
     const { error } = await supabase.auth.signUp({
       email, password,
       options: { data: { full_name: name, role: 'student' } }
