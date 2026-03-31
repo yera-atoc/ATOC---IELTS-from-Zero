@@ -16,23 +16,104 @@ const fmt = (s: number) => `${String(Math.floor(s/60)).padStart(2,'0')}:${String
 const wc = (t: string) => t.trim() === '' ? 0 : t.trim().split(/\s+/).length
 
 const LESSON_CSS = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
-  .lb { font-family: 'DM Sans', sans-serif; color: #cccce0; line-height: 1.9; font-size: 1rem; }
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400&display=swap');
+  
+  .lb { 
+    font-family: 'Nunito', sans-serif; 
+    color: #d0d0e4; 
+    line-height: 1.9; 
+    font-size: 1.02rem; 
+    letter-spacing: 0.01em;
+  }
+  
+  /* Hide docx header table */
   .lb table:first-of-type { display: none !important; }
-  .lb p { margin: 12px 0; }
-  .lb strong { color: #eeeeff; font-weight: 600; }
-  .lb em { color: #a8a4d8; font-style: italic; }
-  .lb p > strong:only-child { display:block; font-family:'Syne',sans-serif; font-size:1.05rem; font-weight:800; color:#e8e8ff; margin:28px 0 8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.07); }
-  .lb table { width:100%; border-collapse:collapse; margin:20px 0; border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.07); }
-  .lb td,.lb th { padding:12px 16px; border:1px solid rgba(255,255,255,0.05); vertical-align:top; font-size:0.9rem; line-height:1.65; }
-  .lb tr:first-child td { background:rgba(124,111,255,0.14)!important; font-weight:700; color:#c8c4ff; font-size:0.8rem; letter-spacing:0.4px; }
-  .lb tr.odd td { background:rgba(255,255,255,0.02); }
-  .lb tr.even td { background:rgba(255,255,255,0.045); }
-  .lb tr:hover td { background:rgba(124,111,255,0.06)!important; transition:background 0.15s; }
-  .lb ul,.lb ol { padding-left:24px; margin:12px 0; }
-  .lb li { margin:8px 0; line-height:1.7; }
-  .lb blockquote { border-left:3px solid #7c6fff; padding:14px 20px; background:rgba(124,111,255,0.06); border-radius:0 12px 12px 0; margin:20px 0; color:#b8b4e8; }
-  .lb hr { border:none; border-top:1px solid rgba(255,255,255,0.06); margin:24px 0; }
+  
+  .lb p { margin: 13px 0; }
+  .lb strong { color: #eeeeff; font-weight: 800; }
+  .lb em { color: #a8a8d8; }
+  
+  /* Section headers */
+  .lb p > strong:only-child {
+    display: block;
+    font-family: 'Nunito', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #ffffff;
+    margin: 32px 0 10px;
+    padding: 0 0 10px 0;
+    border-bottom: 2px solid rgba(124,111,255,0.2);
+  }
+
+  /* Tables */
+  .lb table { 
+    width: 100%; 
+    border-collapse: separate; 
+    border-spacing: 0;
+    margin: 20px 0; 
+    border-radius: 14px; 
+    overflow: hidden; 
+    border: 1px solid rgba(255,255,255,0.06);
+    font-family: 'Nunito', sans-serif;
+  }
+  .lb td, .lb th { 
+    padding: 13px 18px; 
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-right: 1px solid rgba(255,255,255,0.04);
+    vertical-align: top; 
+    font-size: 0.95rem; 
+    line-height: 1.65; 
+  }
+  .lb td:last-child, .lb th:last-child { border-right: none; }
+  .lb tr:last-child td { border-bottom: none; }
+  
+  /* Header row */
+  .lb tr:first-child td { 
+    background: rgba(124,111,255,0.18) !important; 
+    font-weight: 800; 
+    color: #c8c4ff; 
+    font-size: 0.82rem; 
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .lb tr.odd td { background: rgba(255,255,255,0.02); }
+  .lb tr.even td { background: rgba(255,255,255,0.04); }
+  .lb tr:not(:first-child):hover td { 
+    background: rgba(124,111,255,0.07) !important; 
+    transition: background 0.15s; 
+  }
+  
+  /* Lists */
+  .lb ul, .lb ol { padding-left: 26px; margin: 14px 0; }
+  .lb li { 
+    margin: 9px 0; 
+    line-height: 1.75;
+    padding-left: 4px;
+  }
+  .lb ul li::marker { color: #7c6fff; font-size: 1.1em; }
+  .lb ol li::marker { color: #7c6fff; font-weight: 800; }
+  
+  /* Blockquotes = IELTS tips */
+  .lb blockquote { 
+    border-left: 4px solid #7c6fff; 
+    padding: 16px 20px; 
+    background: rgba(124,111,255,0.07); 
+    border-radius: 0 14px 14px 0; 
+    margin: 20px 0; 
+    color: #b8b8e8;
+    font-style: normal;
+  }
+  
+  .lb hr { border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 28px 0; }
+  
+  /* Code */
+  .lb code { 
+    background: rgba(124,111,255,0.12); 
+    padding: 2px 8px; 
+    border-radius: 6px; 
+    font-size: 0.9em;
+    color: #c8c4ff;
+  }
 `
 
 export default function LessonPage() {
@@ -204,7 +285,7 @@ Essay: ${essay.trim()}`
         @keyframes spin { to{transform:rotate(360deg)} }
         @keyframes glow { 0%,100%{box-shadow:0 0 16px rgba(124,111,255,0.5),0 0 32px rgba(124,111,255,0.2)} 50%{box-shadow:0 0 24px rgba(124,111,255,0.8),0 0 48px rgba(124,111,255,0.3)} }
         .fade { animation:fadeUp 0.3s ease both; }
-        .ntab { flex:1;padding:12px 6px;cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:0.85rem;font-weight:600;color:#4a4a6a;border-radius:10px;transition:all 0.2s;text-align:center; }
+        .ntab { flex:1;padding:12px 6px;cursor:pointer;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:0.85rem;font-weight:600;color:#4a4a6a;border-radius:10px;transition:all 0.2s;text-align:center; }
         .ntab.on { background:#181828;color:#e8e8ff; }
         .ntab.on::after { content:'';display:block;width:30px;height:2px;background:linear-gradient(90deg,#7c6fff,#00d4aa);border-radius:99px;margin:4px auto 0; }
         .chk-item { display:flex;align-items:center;gap:12px;padding:14px 16px;background:#0d0d1a;border:1px solid rgba(255,255,255,0.05);border-radius:12px;cursor:pointer;transition:all 0.2s;margin-bottom:8px; }
@@ -214,13 +295,13 @@ Essay: ${essay.trim()}`
         .floating-btn { position:fixed;bottom:28px;right:28px;width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,#7c6fff,#5a4fd4);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.4rem;animation:glow 3s ease-in-out infinite;z-index:999;transition:transform 0.2s; }
         .floating-btn:hover { transform:scale(1.1); }
         .floating-menu { position:fixed;bottom:96px;right:28px;background:#12121e;border:1px solid rgba(255,255,255,0.1);border-radius:16px;padding:8px;min-width:200px;z-index:999;box-shadow:0 8px 32px rgba(0,0,0,0.5);animation:fadeUp 0.2s ease; }
-        .fmenu-item { display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.88rem;color:#cccce0;transition:background 0.15s; }
+        .fmenu-item { display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:10px;cursor:pointer;font-family:'Nunito',sans-serif;font-size:0.88rem;color:#cccce0;transition:background 0.15s; }
         .fmenu-item:hover { background:rgba(124,111,255,0.1); }
         .ai-card { background:linear-gradient(135deg,rgba(124,111,255,0.08),rgba(0,212,170,0.04));border:1px solid rgba(124,111,255,0.2);border-radius:14px;padding:20px;margin-top:16px; }
         .ai-row { display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04); }
         .ai-row:last-child { border-bottom:none; }
         .ai-label { font-size:0.72rem;font-weight:800;letter-spacing:1px;color:#7c6fff;text-transform:uppercase;min-width:80px;padding-top:2px; }
-        .submit-btn { width:100%;padding:16px;background:linear-gradient(135deg,#7c6fff,#5a4fd4);color:white;border:none;border-radius:12px;font-family:'DM Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px; }
+        .submit-btn { width:100%;padding:16px;background:linear-gradient(135deg,#7c6fff,#5a4fd4);color:white;border:none;border-radius:12px;font-family:'Nunito',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px; }
         .submit-btn:hover:not(:disabled) { transform:translateY(-2px);box-shadow:0 8px 24px rgba(124,111,255,0.4); }
         .submit-btn:disabled { opacity:0.4;cursor:not-allowed; }
         .vocab-tag { display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:rgba(124,111,255,0.1);border:1px solid rgba(124,111,255,0.2);border-radius:99px;font-size:0.82rem;color:#b0aaff;margin:4px; }
@@ -327,7 +408,7 @@ Essay: ${essay.trim()}`
               <div style={{ display:'flex',gap:8,marginBottom:12 }}>
                 <input value={newWord} onChange={e=>setNewWord(e.target.value)} onKeyDown={e=>e.key==='Enter'&&addWord()}
                   placeholder="Добавь новое слово..."
-                  style={{ flex:1,padding:'10px 14px',background:'#0a0a14',border:'1px solid rgba(255,255,255,0.07)',borderRadius:9,color:'#d0d0e8',fontFamily:'DM Sans,sans-serif',fontSize:'0.9rem',outline:'none' }}/>
+                  style={{ flex:1,padding:'10px 14px',background:'#0a0a14',border:'1px solid rgba(255,255,255,0.07)',borderRadius:9,color:'#d0d0e8',fontFamily:'Nunito,sans-serif',fontSize:'0.9rem',outline:'none' }}/>
                 <button onClick={addWord} style={{ padding:'10px 18px',background:'rgba(124,111,255,0.15)',border:'1px solid rgba(124,111,255,0.25)',borderRadius:9,color:'#a0a0ff',fontWeight:700,cursor:'pointer',fontSize:'0.88rem' }}>+</button>
               </div>
               <div>
@@ -377,7 +458,7 @@ Essay: ${essay.trim()}`
 
             {/* Task prompt */}
             <div style={{ marginBottom:14 }}>
-              <input style={{ width:'100%',padding:'12px 16px',background:'#0d0d1a',border:'1px solid rgba(255,255,255,0.06)',borderRadius:10,color:'#d0d0e8',fontFamily:'DM Sans,sans-serif',fontSize:'0.9rem',outline:'none' }}
+              <input style={{ width:'100%',padding:'12px 16px',background:'#0d0d1a',border:'1px solid rgba(255,255,255,0.06)',borderRadius:10,color:'#d0d0e8',fontFamily:'Nunito,sans-serif',fontSize:'0.9rem',outline:'none' }}
                 placeholder="Тема / вопрос задания (необязательно)..."
                 value={taskPrompt} onChange={e=>setTaskPrompt(e.target.value)}/>
             </div>
@@ -393,7 +474,7 @@ Essay: ${essay.trim()}`
                   <span style={{ color:'#4a4a6a' }}>{essay.length} симв.</span>
                 </div>
               </div>
-              <textarea style={{ width:'100%',minHeight:200,padding:'14px',background:'#09090f',border:'1px solid rgba(255,255,255,0.04)',borderRadius:10,color:'#d8d8f0',fontFamily:'DM Sans,sans-serif',fontSize:'0.95rem',lineHeight:1.8,resize:'vertical',outline:'none' }}
+              <textarea style={{ width:'100%',minHeight:200,padding:'14px',background:'#09090f',border:'1px solid rgba(255,255,255,0.04)',borderRadius:10,color:'#d8d8f0',fontFamily:'Nunito,sans-serif',fontSize:'0.95rem',lineHeight:1.8,resize:'vertical',outline:'none' }}
                 placeholder={taskType==='task2'?"Введение: парафраз темы + позиция...\n\nBody 1...\n\nBody 2...\n\nЗаключение...":taskType==='task1'?"The chart/graph shows...\n\nOverall, it is clear that...":"Напиши ответ на упражнение..."}
                 value={essay}
                 onFocus={()=>{ if(!timerActive&&essay.length===0) setTimerActive(true) }}
